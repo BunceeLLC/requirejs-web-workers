@@ -10,13 +10,25 @@ define(function () {
 
 			var url = req.toUrl(name);
 
-			if (window.Worker) {
-				onLoad(new Worker(url));
-			} else {
-				req(["worker-fake"], function () {
-					onLoad(new Worker(url));
-				});
-			}
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', url);
+			xhr.onload = function() {
+			    if (xhr.status === 200) {
+			        var workerSrcBlob;
+			        var workerBlobURL;
+		            workerSrcBlob = new Blob([xhr.responseText], { type: 'text/javascript' });
+		            workerBlobURL = window.URL.createObjectURL(workerSrcBlob);
+			        
+			        if (window.Worker) {
+			        	onLoad(new Worker(workerBlobURL));
+			        } else {
+			        	req(["worker-fake"], function () {
+							onLoad(new Worker(url));
+						});
+			        }
+			    }
+			};
+			xhr.send();
 		}
 	};
 });
